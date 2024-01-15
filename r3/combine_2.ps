@@ -1,0 +1,121 @@
+#include "common.h"
+#include "mblur.h"
+#include "dof.h"
+
+#ifdef SSFX_DEBAND
+	#include "screenspace_debanding.h"
+#endif
+
+//////////////////////////////////////////////////////////////////////////////////////////
+#ifndef USE_MSAA
+Texture2D							s_distort;
+#else // !USE_MSAA
+#ifdef MSAA_OPTIMIZATION
+Texture2DMS<float4>					s_distort;
+#else
+Texture2DMS<float4, MSAA_SAMPLES>	s_distort;
+#endif // MSAA_OPTIMIZATION
+#endif // !USE_MSAA
+#define	EPSDEPTH	0.001
+
+uniform float4 		e_barrier;		// x=norm(.8f), y=depth(.1f), z=clr
+uniform float4 		e_weights;		// x=norm, y=depth, z=clr
+uniform float4 		e_kernel;		// x=norm, y=depth, z=clr
+uniform float4		effect_params;		// x=vibrance, y=vignette
+uniform float4		color_grading;		// rgb=color, w=intensity
+
+#include "vibrance.h"
+#include "vignette.h"
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+
+struct c2_out
+{
+	float4	Color : SV_Target;
+#ifdef USE_MSAA
+	float	Depth : SV_Depth;
+#endif
+};
+
+c2_out main( v2p_aa_AA I )
+{
+	c2_out	res;
+	res.Color = float4(0,0,0,0);
+
+	int iSample = 0;
+
+#ifdef GBUFFER_OPTIMIZATION
+	gbuffer_data gbd	= gbuffer_load_data(I.Tex0, I.HPos, iSample );
+#else
+	gbuffer_data gbd	= gbuffer_load_data(I.Tex0, iSample );
+#endif
+	
+  	float 	depth 	= gbd.P.z;
+
+#ifdef 	USE_DISTORT
+#ifndef USE_MSAA
+	float4 	distort	= s_distort.Sample(smp_nofilter, I.Tex0);
+#else // USE_MSAA
+	float4 	distort	= s_distort.Load( int3( I.Tex0 * pos_decompression_params2.xy, 0 ), iSample );
+#endif // USE_MSAA
+	float2	offset	= (distort.xy-(127.0h/255.0h))*def_distort;  // fix newtral offset
+	float2	center	= I.Tex0 + offset;
+
+#ifdef GBUFFER_OPTIMIZATION
+	gbuffer_data gbdx	= gbuffer_load_data_offset(I.Tex0, center, I.HPos, iSample );
+#else
+	gbuffer_data gbdx	= gbuffer_load_data_offset(I.Tex0, center, iSample);
+#endif
+
+	float 	depth_x	= gbdx.P.z;
+	if ((depth_x+EPSDEPTH)<depth)	center	= I.Tex0;	// discard new sample
+#else // USE_DISTORT
+	float2	center 	= I.Tex0;
+#endif
+   	//float3 	img 	= tex2D		(s_image, center);
+
+	float3	img	= dof(center);
+//	float4 	bloom	= tex2D		(s_bloom, center);
+	float4 	bloom	= s_bloom.Sample( smp_rtlinear, center);
+
+			img 	= mblur( center, ( gbd ).P, img.rgb);
+
+	// Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
+#ifdef SSFX_DEBAND
+	if (depth <= SKY_EPS)
+		img = ssfx_debanding(img, I.Tex0.xy);
+#endif
+
+#ifdef 	USE_DISTORT
+ 	float3	blurred	= bloom*def_hdr	;
+			img		= lerp	(img,blurred,distort.z);
+#endif
+	img = VibrancePass(img);		// Vibrance
+
+ 	res.Color += combine_bloom( img, bloom );
+
+	res.Color.rgb = VignettePass(center - float2(0.5f, 0.5f), res.Color.rgb);	// Vignette
+
+	// Color grading
+#ifdef USE_COLOR_GRADING
+	const float3 luminance = float3(0.213f, 0.715f, 0.072f);
+	float lum = dot(res.Color.rgb, luminance)*2;
+
+	float3 min = 0.0f;
+	float3 med = color_grading.xyz;
+	float3 max = 1.0f;
+
+	img = lerp(float3(0,0,0), med, saturate(lum * 2.0f));
+	img = lerp(img, float3(1,1,1), saturate(lum-0.5f)*2.0f);
+
+	res.Color.rgb = saturate(lerp(res.Color.rgb, img, saturate(lum*color_grading.w)));
+#endif
+
+#ifdef USE_MSAA
+	float4 ptp = mul(m_P, float4(gbd.P, 1));
+	res.Depth = ptp.w==0?1:ptp.z/ptp.w;
+#endif
+	
+	return res;
+}

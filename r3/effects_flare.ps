@@ -1,0 +1,38 @@
+#include "common.h"
+
+struct p_flare
+{
+	float2 	Tex0		: TEXCOORD0;
+	float4	tctexgen	: TEXCOORD1;
+	float4	Color		: COLOR;
+#ifdef GBUFFER_OPTIMIZATION
+	float4 	HPos		: SV_Position;	// Clip-space position 	(for rasterization)
+#endif // GBUFFER_OPTIMIZATION
+};
+
+// SkyLoader: clip distance for hud model
+#define	CLIP_DISTANCE		1.5f
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+float4 main( p_flare I ) : SV_Target
+{
+	float4 t_base 		= s_base.Sample( smp_base, I.Tex0 ) * I.Color;
+
+	float2 tcProj		= I.tctexgen.xy / I.tctexgen.w;
+#ifdef GBUFFER_OPTIMIZATION
+	gbuffer_data gbd	= gbuffer_load_data( tcProj, I.HPos );
+#else
+	gbuffer_data gbd	= gbuffer_load_data( tcProj );
+#endif
+	float4 _P		= float4( gbd.P, gbd.mtl );
+
+	float spaceDepth	= gbd.P.z;
+	if (spaceDepth < 0.01f)
+		spaceDepth	= 100000.0f; //  filter for skybox
+	
+	// clip pixels on hud
+	clip			(spaceDepth-CLIP_DISTANCE);
+
+	return	t_base;
+}

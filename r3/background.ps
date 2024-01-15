@@ -1,0 +1,27 @@
+#include "common.h"
+
+struct PSInput
+{
+	float4 Tex0   : TEXCOORD0;      // Tex0.xy, Tex0.w = tonemap scale
+	float2 TexJ   : TEXCOORD1;      // jitter coords
+	float4 pos2d  : SV_Position;
+};
+
+struct PSOutput
+{
+	float4 low    : SV_Target0;
+	float4 high   : SV_Target1;
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Pixel
+PSOutput main(PSInput I)
+{
+	float4 color = s_base.Sample( smp_rtlinear, I.Tex0.xy );
+
+	// final tone-mapping
+	PSOutput Out;
+	Out.low      = float4(color.rgb, 0);
+	Out.high     = Out.low/def_hdr;
+	return Out;
+}

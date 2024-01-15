@@ -1,0 +1,16 @@
+#include "common.h"
+
+struct 	v2p
+{
+ 	float2 	tc0: 		TEXCOORD0;	// base
+// 	half3 	tc1: 		TEXCOORD1;	// environment
+  	half4	c0:			COLOR0;		// sun.(fog*fog)
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+// Pixel
+half4 	main	( v2p I )	: COLOR
+{
+	return float4 (0,0,0,0);
+}
