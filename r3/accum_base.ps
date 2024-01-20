@@ -86,7 +86,8 @@ out_lighting main( p_volume I ) : SV_Target
 
 	out_lighting O;
 	float4 L = light * s * lightmap;
-	O.diffuse = Ldynamic_color * L;
-	O.specular = Ldynamic_color * Ldynamic_color.w * L.w;
+	float4 dyn_col = Ldynamic_color * Ldynamic_color;
+	O.diffuse = dyn_col * L;
+	O.specular = dyn_col * dyn_col.w * L.w;
 	return O;
 }

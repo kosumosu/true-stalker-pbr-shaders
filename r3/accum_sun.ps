@@ -42,9 +42,10 @@ out_lighting 	main	( p_aa_AA_sun I ) : SV_Target
 //	float 	s 	= dot	( s_sum, 1.h/4.h);
 	float 	s 	= ((s_sum.x+s_sum.y)+(s_sum.z+s_sum.w))*(1.h/4.h);
 
+	float4 dyn_col = Ldynamic_color * Ldynamic_color;
 	out_lighting O;
 	float4 L = light * s;
-	O.diffuse = Ldynamic_color * L;
-	O.specular = Ldynamic_color * Ldynamic_color.w * L.w;
+	O.diffuse = dyn_col * L;
+	O.specular = dyn_col * dyn_col.w * L.w;
 	return O;
 }

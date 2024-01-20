@@ -99,10 +99,11 @@ out_lighting main ( v2p_volume I ) : SV_Target
 	s += ((1-s)*(1-fac_x*fac_y));
 	//\ Far edge fading code
 
+	float4 dyn_col = Ldynamic_color * Ldynamic_color;
 	out_lighting O;
 	float4 L = light * s;
-	O.diffuse = Ldynamic_color*L;
-	O.specular = Ldynamic_color*Ldynamic_color.w*L.w;
+	O.diffuse = dyn_col*L;
+	O.specular = dyn_col*dyn_col.w*L.w;
 	return O;
 }
 #endif

@@ -84,7 +84,7 @@ float4 main ( v2p I, uint iSample : SV_SAMPLEINDEX ) : SV_Target
 	float maxIntens = I.fDensity;
 	float3	result = maxIntens * s * att;
 	result *= lightmap;
-	result *= Ldynamic_color * t_noise;
+	result *= Ldynamic_color * Ldynamic_color * t_noise;
 
 //	result = maxIntens;
 //	result *= lightmap;

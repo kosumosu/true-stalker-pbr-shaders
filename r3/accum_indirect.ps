@@ -40,7 +40,7 @@ out_lighting main ( float4 tc:TEXCOORD0 ) : SV_Target
 
 	// Final color
 	out_lighting O;
-	O.diffuse = Ldynamic_color * att * light * hemi;
+	O.diffuse = Ldynamic_color * Ldynamic_color * att * light * hemi;
 	O.specular = float4(0,0,0,0);
 	return O;
 }

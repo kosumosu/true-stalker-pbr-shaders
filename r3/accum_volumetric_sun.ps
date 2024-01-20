@@ -121,7 +121,7 @@ float4 	main (v2p_volume  I) : SV_Target
 
 	res		*= fSaturation;
 
-	return res*Ldynamic_color;
+	return res*Ldynamic_color * Ldynamic_color;
 #endif	//	SUN_SHAFTS_QUALITY
 }
 
