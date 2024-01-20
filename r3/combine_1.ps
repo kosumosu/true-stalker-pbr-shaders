@@ -90,7 +90,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 	// Sample the buffers:
 	float4	P = float4( gbd.P, gbd.mtl );	// position.(mtl or sun)
 	float4	N = float4( gbd.N, gbd.hemi );		// normal.baked_ao
-	float4	D = float4( gbd.C, gbd.gloss );		// rgb.specular
+	float4	D = float4( gbd.C * gbd.C, gbd.gloss );		// rgb.specular
 #ifndef USE_MSAA
 	float4	L = s_accum_diffuse.Sample( smp_nofilter, I.tc0);	// diffuse lighting
 	float4	S = s_accum_spec.Sample( smp_nofilter, I.tc0);	// specular lighting
@@ -170,8 +170,14 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 	float occ = calc_ssao( CS_P(P, N, I.tc0, I.tcJ, I.pos2d, ISAMPLE ) );
 #endif
 #endif // USE_HDAO
+
+#if USE_PBR && 0
+	hmodel_pbr(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
+#else
+	hmodel(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
+#endif
 	
-	hmodel	(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
+	//hmodel	(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
 //      hmodel		(hdiffuse, hspecular, mtl, 1, D.w, P.xyz, N.xyz);
 //	hdiffuse*=hdiffuse;			//. high contrast hemi
 //	hdiffuse*=(D.rgb*0.8 + 0.2h);	// rise texture contrast for diffuse lighting
@@ -265,6 +271,9 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 	//o.low = float4(gbd.P,1);
 
 	//o.low = float4( 1.0f, 0.0f, 0.0f, 1.0f );
+
+		o.low.rgb = pow(o.low.rgb, 0.5);
+		//o.low.r = 1;
 
 		return        	o;
 }

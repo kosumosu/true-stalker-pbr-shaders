@@ -35,7 +35,7 @@ void tonemap( out float4 low, out float4 high, float3 rgb, float scale)
 
 float4 combine_bloom( float3  low, float4 high)	
 {
-        return float4( low + high*high.a, 1.h );
+        return float4( low + pow(high*high.a, 0.5), 1.h );
 }
 
 float calc_fogging( float4 w_pos )      

@@ -48,7 +48,7 @@ float4 plight_local( float m, float3 pnt, float3 normal, float3 light_position, 
 		rsqr	= dot		(L2P,L2P);					// distance 2 light (squared)
   	float  att 	= saturate	(1 - rsqr*light_range_rsq);			// q-linear attenuate
 	float4 light	= s_material.Sample( smp_material, float3( dot(L,N), dot(H,N), m ) ).xxxy;		// sample material
-  	return att*light;
+  	return att*att*light*light;
 }
 
 //	TODO: DX10: Remove path without blending
