@@ -82,9 +82,12 @@ float4 main ( v2p I, uint iSample : SV_SAMPLEINDEX ) : SV_Target
 	//float maxIntens = 1.0h/40.0h;	
 	//float maxIntens = 1.0h/10.0h;
 	float maxIntens = I.fDensity;
-	float3	result = maxIntens * s * att;
+	float3 squared_result = maxIntens * display_to_working_space(att * Ldynamic_color);
+
+	float3	result = s * squared_result;
 	result *= lightmap;
-	result *= Ldynamic_color * Ldynamic_color * t_noise;
+	result *= t_noise;
+	result *= 10 * light_inscatter(dot(-normalize(I.lightToPos), normalize(I.vPos))); // coeff is to add density compensate for added inscatter factor, otherwise volumetric lights become too weak
 
 //	result = maxIntens;
 //	result *= lightmap;

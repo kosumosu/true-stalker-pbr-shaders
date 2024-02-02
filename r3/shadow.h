@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+#include "jitter.h"
+
 //uniform	sampler	s_smap	: register(ps,s0);	// 2D/cube shadowmap
 //Texture2D<float>	s_smap;		// 2D/cube shadowmap
 //	Used for RGBA texture too ?!
@@ -12,9 +14,9 @@ Texture2D<float>	s_smap_minmax;		// 2D/cube shadowmap
 #include "gather.ps"
 
 SamplerComparisonState		smp_smap;	//	Special comare sampler
-sampler		smp_jitter;
+//sampler		smp_jitter;
 
-Texture2D	jitter0;
+//Texture2D	jitter0;
 Texture2D	jitter1;
 //uniform sampler2D	jitter2;
 //uniform sampler2D	jitter3;

@@ -11,6 +11,8 @@ function normal		(shader, t_base, t_second, t_detail)
 
 	shader:dx10texture	("s_vollight", 	"$user$generic2")
 	shader:dx10texture 	("s_tonemap", 	"$user$tonemap")
+	shader:dx10texture	("jitter0", "$user$jitter_0")
 
 	shader:dx10sampler	("smp_nofilter")
+	shader:dx10sampler	("smp_jitter")
 end

@@ -58,7 +58,11 @@ out_lighting main( p_volume I ) : SV_Target
 
         // ----- light-model
       	float        		rsqr;
-        float4        		light   = plight_local( m, _P, _N, Ldynamic_pos, Ldynamic_pos.w, rsqr );
+#if USE_PBR
+        light_t        		light   = plight_local_pbr( m, gbd.C.xyz, gbd.gloss, _P, _N, Ldynamic_pos, Ldynamic_pos.w, rsqr );
+#else
+        light_t        		light   = plight_local( m, _P, _N, Ldynamic_pos, Ldynamic_pos.w, rsqr );
+#endif
 
         // ----- shadow
 		float4          		P4      = float4( _P.x, _P.y, _P.z, 1);
@@ -85,9 +89,10 @@ out_lighting main( p_volume I ) : SV_Target
         #endif
 
 	out_lighting O;
-	float4 L = light * s * lightmap;
-	float4 dyn_col = Ldynamic_color * Ldynamic_color;
-	O.diffuse = dyn_col * L;
-	O.specular = dyn_col * dyn_col.w * L.w;
+	float3 l_d = light.diffuse * s * lightmap.rgb;
+	float3 l_s = light.specular * s * lightmap.rgb;
+	float4 dyn_col = display_to_working_space(Ldynamic_color);
+	O.diffuse.rgb = dyn_col.rgb * l_d;
+	O.specular.rgb = dyn_col.rgb /* * dyn_col.w */ * l_s;
 	return O;
 }

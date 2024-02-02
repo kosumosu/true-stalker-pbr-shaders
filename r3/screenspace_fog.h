@@ -1,3 +1,4 @@
+#pragma once
 /**
  * @ Version: SCREEN SPACE SHADERS - UPDATE 14.4
  * @ Description: 2 Layers fog ( Distance + Height )
@@ -6,18 +7,23 @@
  * @ Mod: https://www.moddb.com/mods/stalker-anomaly/addons/screen-space-shaders
  */
 
+#include "common_functions.h"
 #include "settings_screenspace_FOG.h"
+
+uniform float4 sun_shafts_intensity;
 
 float SSFX_HEIGHT_FOG(float3 P, float World_Py, inout float3 color)
 {
+	const float len = length(P);
+
 	// Get Sun dir
 	float3 Sun = saturate(dot(normalize(Ldynamic_dir), -normalize(P)));
 
 	// Apply sun color
-	Sun = lerp(fog_color, Ldynamic_color.rgb, Sun);
+	Sun = lerp(display_to_working_space(fog_color), display_to_working_space(Ldynamic_color.rgb), Sun);
 
 	// Distance Fog ( Default Anomaly Fog )
-	float fog = saturate(length(P) * fog_params.w + fog_params.x);
+	float fog = saturate(len * fog_params.w + fog_params.x);
 
 	// Height Fog
 	float fogheight = smoothstep(G_FOG_HEIGHT + fog_params.y, -G_FOG_HEIGHT + fog_params.y, World_Py) * G_FOG_HEIGHT_INTENSITY;
@@ -29,13 +35,18 @@ float SSFX_HEIGHT_FOG(float3 P, float World_Py, inout float3 color)
 	float FogBlend = fogheight * G_FOG_SUNCOLOR_INTENSITY;
 
 	// Final fog color
-	float3 FOG_COLOR = lerp(fog_color, Sun, FogBlend);
+	//float3 FOG_COLOR = lerp(fog_color * fog_color, Sun, FogBlend);
+	float3 FOG_COLOR = display_to_working_space(fog_color);
 
 	// Apply fog to color
-	color = lerp(color, FOG_COLOR, fogresult);
+	const float density_per_distance = volume_density_from_sunshafts_intensity(sun_shafts_intensity.x);
+	color *= transmission_per_volume_length(density_per_distance, len);
+
+	//color = lerp(color, FOG_COLOR, fogresult);
 
 	// Return distance fog.
-	return fog;
+	return 0.0;
+	//return fog;
 }
 
 float SSFX_FOGGING(float Fog, float World_Py)

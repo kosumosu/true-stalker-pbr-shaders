@@ -5,11 +5,13 @@
 
 #ifndef	USE_DOF
 
+#include "gamma.h"
+
 float3	dof(float2 center)
 {
 //	float3 	img 	= tex2D		(s_image, center);
 	float3 	img 	= s_image.Sample( smp_rtlinear, center);
-	return	img;
+	return intermediate_to_working_space(img);
 }
 
 #else	//	USE_DOF
@@ -73,6 +75,7 @@ float3	dof(float2 center)
 	// sample
 //	float3	sum 	= tex2D(s_image,center);
 	float3	sum 	= s_image.Sample( smp_nofilter, center);
+	sum = intermediate_to_working_space(sum);
 	float 	contrib	= 1.h;
 
    	[unroll] for (int i=0; i<12; i++)
@@ -83,6 +86,8 @@ float3	dof(float2 center)
 		//	TODO: DX10: test linear sampler
 //		float4	tap_color	= s_image.Sample( smp_rtlinear, tap );
 		float4	tap_color	= s_image.Sample( smp_nofilter, tap );
+	
+		tap_color = intermediate_to_working_space(tap_color);
 #ifndef USE_MSAA
       float 	tap_depth 	= s_position.Sample( smp_nofilter, tap).z;
 #else

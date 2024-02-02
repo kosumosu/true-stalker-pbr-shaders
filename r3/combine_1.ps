@@ -65,6 +65,10 @@ Texture2D<float> s_occ;
 #endif	//	USE_HBAO
 #endif // USE_HDAO
 
+
+#include "jitter.h"
+
+
 struct	_input
 {
 	float4	tc0	: TEXCOORD0;	// tc.xy, tc.w = tonemap scale
@@ -90,7 +94,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 	// Sample the buffers:
 	float4	P = float4( gbd.P, gbd.mtl );	// position.(mtl or sun)
 	float4	N = float4( gbd.N, gbd.hemi );		// normal.baked_ao
-	float4	D = float4( gbd.C * gbd.C, gbd.gloss );		// rgb.specular
+	float4	D = float4( display_to_working_space(gbd.C), gbd.gloss );		// rgb.specular
 #ifndef USE_MSAA
 	float4	L = s_accum_diffuse.Sample( smp_nofilter, I.tc0);	// diffuse lighting
 	float4	S = s_accum_spec.Sample( smp_nofilter, I.tc0);	// specular lighting
@@ -171,8 +175,8 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 #endif
 #endif // USE_HDAO
 
-#if USE_PBR && 0
-	hmodel_pbr(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
+#if USE_PBR
+	hmodel_pbr(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz, D.xyz);
 #else
 	hmodel(hdiffuse, hspecular, mtl, N.w, D.w, P.xyz, N.xyz);
 #endif
@@ -188,7 +192,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 
         float4         light       = float4         (L.rgb + hdiffuse, 1.f)        ;
         float4         C           = D*light       ;                             // rgb.gloss * light(diffuse)
-	float3         spec        = D.www * S.rgb + hspecular;      // replicated specular
+	float3         spec        = /*D.www **/ S.rgb + hspecular;      // replicated specular
 
 #ifdef         USE_SUPER_SPECULAR
                       spec      = (C.rgb*.5h + .5h)*D.www*S.rgb + hspecular;
@@ -240,7 +244,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 #else
 	float		distance		= length		(P.xyz);
 	float		fog				= saturate		(distance*fog_params.w + fog_params.x);
-			color			= lerp			(color,fog_color,fog);
+			color			= lerp			(color,display_to_working_space(fog_color),fog);
 #endif
         float        	skyblend		= saturate		(fog*fog);
 
@@ -272,7 +276,10 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 
 	//o.low = float4( 1.0f, 0.0f, 0.0f, 1.0f );
 
-		o.low.rgb = pow(o.low.rgb, 0.5);
+		o.low.rgb = working_to_intermediate_space(o.low.rgb);
+
+		o.low.rgb += sample_color256_jitter(I.tc0.xy);
+		//o.low.rgb = pow(o.low.rgb, 0.5);
 		//o.low.r = 1;
 
 		return        	o;

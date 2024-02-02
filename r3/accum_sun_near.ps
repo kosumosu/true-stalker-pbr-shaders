@@ -54,14 +54,19 @@ out_lighting main ( v2p_volume I ) : SV_Target
 
 	float4	_P	= float4( gbd.P, gbd.mtl );
 	float4	_N	= float4( gbd.N, gbd.hemi );
-	float4	_C	= float4( gbd.C, gbd.gloss );
+	float4	_C	= float4( display_to_working_space(gbd.C), gbd.gloss );
 
 	// ----- light-model
 	float	m	= xmaterial;
 # ifndef USE_R2_STATIC_SUN
 			m 	= _P.w;
 # endif
-	float4	light	= plight_infinity ( m, _P, _N, _C, Ldynamic_dir );
+
+#if USE_PBR
+	light_t	light	= plight_infinity_pbr( m, _C, gbd.gloss, _P, _N, Ldynamic_dir );
+#else
+	light_t	light	= plight_infinity( m, _P, _N, _C, Ldynamic_dir );
+#endif
 
 	// ----- shadow
   	float4 	P4 	= float4( _P.x, _P.y, _P.z, 1.f);
@@ -83,12 +88,10 @@ out_lighting main ( v2p_volume I ) : SV_Target
 
 	s *= SSFX_ScreenSpaceShadows(_P, I.hpos, ISAMPLE);
 
-	float4 dyn_col = Ldynamic_color * Ldynamic_color;
-
+	float4 dyn_col = display_to_working_space(Ldynamic_color) * 2.0;
 	out_lighting O;
-	float4 L = light * s;
-	O.diffuse = dyn_col*L;
-	O.specular = dyn_col*dyn_col.w*L.w;
+	O.diffuse.rgb = dyn_col.rgb * light.diffuse * s;
+	O.specular.rgb = dyn_col.rgb /** dyn_col.w*/ * light.specular * s;
 	return O;
 }
 #endif

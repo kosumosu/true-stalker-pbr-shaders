@@ -1,6 +1,8 @@
 #ifndef	common_functions_h_included
 #define	common_functions_h_included
 
+#include "gamma.h"
+
 //	contrast function
 float Contrast(float Input, float ContrastPower)
 {
@@ -35,7 +37,7 @@ void tonemap( out float4 low, out float4 high, float3 rgb, float scale)
 
 float4 combine_bloom( float3  low, float4 high)	
 {
-        return float4( low + pow(high*high.a, 0.5), 1.h );
+	return float4( low + high.rgb*high.a, 1.h );
 }
 
 float calc_fogging( float4 w_pos )      
@@ -248,6 +250,7 @@ gbuffer_data gbuffer_load_data( float2 tc : TEXCOORD, float2 pos2d, int iSample 
 	// leftbottom   = ( -tan(fHorzFOV/2), -tan(fVertFOV/2), 1 )
 	// rightbottom	= (  tan(fHorzFOV/2), -tan(fVertFOV/2), 1 )
 	gbd.P  = float3( P.z * ( pos2d * pos_decompression_params.zw - pos_decompression_params.xy ), P.z );
+	gbd.view_dir  = float3( pos2d * pos_decompression_params.zw - pos_decompression_params.xy, 1.0 );
 
 	// reconstruct N
 	gbd.N = gbuf_unpack_normal( P.xy );
@@ -471,6 +474,39 @@ uint alpha_to_coverage ( float alpha, float2 pos2d )
 #endif
 #endif
 
+float mie_cornette_shanks(float g, float cosTheta)
+{
+	const float PI = 3.14159265358979;
 
+	const float g2 = g * g;
+	const float k = 3.0 / (8.0 * PI);
+	const float denom = (2 + g2) * pow((1 + g2 - 2 * g * cosTheta), 1.5);
+	return (k * ((1 - g2) * (1 + cosTheta * cosTheta)) / denom);
+}
+
+
+float light_inscatter(float cosTheta) {
+
+	return mie_cornette_shanks(0.4, cosTheta);
+}
+
+float transmission_per_volume_length(float density, float length) {
+	return exp(-density * length);
+}
+
+float transfer_per_volume_length(float density, float length) {
+	return 1 - exp(-density * length);
+}
+
+float volume_density_from_sunshafts_intensity(float sunshafts_intensity) {
+	float max_density = sunshafts_intensity * sunshafts_intensity;
+
+	return max_density / 8; // consider density is given per X meters;
+}
+
+float distance_to_fog_ceiling(float from_height, float cosTheta) {
+	const float plane_peight = 30.0;
+	return clamp(plane_peight - from_height, 0.0, 500.0) / max(0.001, cosTheta);
+}
 
 #endif	//	common_functions_h_included

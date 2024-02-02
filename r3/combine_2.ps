@@ -83,8 +83,8 @@ c2_out main( v2p_aa_AA I )
 
 	// Sky Debanding Implementation  - SCREEN SPACE SHADERS - UPDATE 12.5
 #ifdef SSFX_DEBAND
-	if (depth <= SKY_EPS)
-		img = ssfx_debanding(img, I.Tex0.xy);
+	// if (depth <= SKY_EPS)
+	// 	img = ssfx_debanding(img, I.Tex0.xy);
 #endif
 
 #ifdef 	USE_DISTORT
@@ -96,6 +96,7 @@ c2_out main( v2p_aa_AA I )
  	res.Color += combine_bloom( img, bloom );
 
 	res.Color.rgb = VignettePass(center - float2(0.5f, 0.5f), res.Color.rgb);	// Vignette
+	res.Color.rgb = working_to_display_space(res.Color.rgb);
 
 	// Color grading
 #ifdef USE_COLOR_GRADING

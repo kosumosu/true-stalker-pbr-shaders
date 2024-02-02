@@ -14,10 +14,10 @@
 		#define RAY_SAMPLES	20
 	#elif SUN_SHAFTS_QUALITY==2
 		#define	FILTER_LOW
-		#define RAY_SAMPLES	20
+		#define RAY_SAMPLES	40
 	#elif SUN_SHAFTS_QUALITY==3
 		#define	FILTER_LOW	
-		#define RAY_SAMPLES	40
+		#define RAY_SAMPLES	60
 	#endif
 #endif
 
@@ -31,6 +31,7 @@
 
 uniform float4 volume_range;	//	x - near plane, y - far plane
 uniform float4 sun_shafts_intensity;
+
 
 #ifdef MSAA_OPTIMIZATION
 //#ifdef GBUFFER_OPTIMIZATION
@@ -58,60 +59,86 @@ float4 	main (v2p_volume  I) : SV_Target
 	//float3	P = tex2D(s_position, tc).xyz;
 	float3	P = gbd.P;
 
+	const float3 view_dir = normalize(gbd.view_dir);
+
+	float3 world_view_dir = mul(m_inv_V, view_dir);
+	//float3 world_pos = mul(m_inv_V, P);
+	float distance_to_volume_exit = distance_to_fog_ceiling(eye_position.y, world_view_dir.y);
+
+	float depth;
+	if (P.z < 0.0001) {
+		depth = distance_to_volume_exit;
+	} else {
+		float distance_to_object = length(P);
+		depth = min(distance_to_object, distance_to_volume_exit );
+	}
+	//P = view_dir * depth;
+
+	const float shadow_far_limit = 120.0;
+	float shadowed_depth = min(depth, shadow_far_limit);
+	float unshadowed_depth = depth - shadowed_depth;
+	P = view_dir * shadowed_depth;
+
 #ifndef	JITTER_SUN_SHAFTS
 //	Fixed ray length, fixed step dencity
 //	float3	direction = (RAY_PATH/RAY_SAMPLES)*normalize(P);	
 //	Variable ray length, variable step dencity
 	float3	direction = P/RAY_SAMPLES;
+	float	deltaDepth = shadowed_depth/RAY_SAMPLES;
 #else	//	JITTER_SUN_SHAFTS
 //	float2	tcJ = I.tcJ;
 //	Variable ray length, variable step dencity, use jittering
 	//float4	J0 	= tex2D		(jitter0,tcJ);
 	float4	J0 	= jitter0.Sample( smp_jitter, tc*screen_res.x*1.f/JITTER_TEXTURE_SIZE );
-	float	coeff = (RAY_SAMPLES - 1*J0.x)/(RAY_SAMPLES*RAY_SAMPLES);		
+	float	coeff = (RAY_SAMPLES - 1*J0.x)/(RAY_SAMPLES*RAY_SAMPLES);
 	float3	direction = P*coeff;
+	// float	deltaDepth = direction.z;
+	float	deltaDepth = shadowed_depth * coeff;
 //	float3	direction = P/(RAY_SAMPLES+(J0.x*4-2));
 #endif	//	JITTER_SUN_SHAFTS
 
-	float	depth = P.z;
-	float	deltaDepth = direction.z;
-	
 	float4	current	= mul (m_shadow,float4(P,1));
 	float4	delta 	= mul (m_shadow, float4(direction,0));
 
-	float	res = 0;
-	float	max_density = sun_shafts_intensity.x;
-	float	density = max_density/RAY_SAMPLES;
+	const float density_per_distance = volume_density_from_sunshafts_intensity(sun_shafts_intensity.x);
 
-	if (depth<0.0001)
-		res = max_density;
+	const float accum_per_step = transfer_per_volume_length(density_per_distance, deltaDepth);
+	const float extinction_per_step = transmission_per_volume_length(density_per_distance, deltaDepth);
+
+	const float3 world_far_pos = mul(m_inv_V, P);
+	const float3 world_sun_dir = mul(m_inv_V, -Ldynamic_dir);
+	const float sun_far_distance_to_volume_exit = distance_to_fog_ceiling(world_far_pos.y, world_sun_dir.y);
+	const float sun_distance_increase_per_step = dot(direction, -Ldynamic_dir);
+	const float sun_transmittance_change_per_step = transmission_per_volume_length(density_per_distance, sun_distance_increase_per_step);
+	float sun_current_transmittance = transmission_per_volume_length(density_per_distance, sun_far_distance_to_volume_exit);
+
+	float res = transfer_per_volume_length(density_per_distance, unshadowed_depth);
 
 	[unroll]
 	for ( int i=0; i<RAY_SAMPLES; ++i )
 	{
-		if (depth > 0.3f)
+		res *= extinction_per_step;
+		if (shadowed_depth > 0.3f)
 		{
-				float s = 1.f;
-				// SkyLoader: fixed flickering shafts
-				if (depth < 120.f)
-				{
+				float s;
 #ifndef	FILTER_LOW
 #ifndef SM_MINMAX
-					s = shadow( current );
+				s = shadow( current );
 #else
-					s = shadow_dx10_1_sunshafts(current, pos2d.xy );
+				s = shadow_dx10_1_sunshafts(current, pos2d.xy );
 #endif
 #else	//	FILTER_LOW
-					s = sample_hw_pcf(current, float4(0,0,0,0));
+				s = sample_hw_pcf(current, float4(0,0,0,0));
 #endif	//	FILTER_LOW
-				}
-				res += density*s;
+				res += accum_per_step * s; //* sun_current_transmittance;
 		}
 
-		depth -= deltaDepth;
+		sun_current_transmittance *= sun_transmittance_change_per_step;
+		shadowed_depth -= deltaDepth;
 		current -= delta;
 	}
 
+/*
 	float fSaturation = -Ldynamic_dir.z;
 
 	//	Normalize dot product to
@@ -121,7 +148,12 @@ float4 	main (v2p_volume  I) : SV_Target
 
 	res		*= fSaturation;
 
-	return res*Ldynamic_color * Ldynamic_color;
+	*/
+
+	res *= light_inscatter(dot(normalize(-Ldynamic_dir), view_dir)); // coeff is to add density compensate for added inscatter factor, otherwise volumetric lights become too weak
+
+
+	return float4(res * display_to_working_space(Ldynamic_color.rgb) * 2.0 /*+ J0.rgb * 0.25 / 255.0*/, 0.0);
 #endif	//	SUN_SHAFTS_QUALITY
 }
 

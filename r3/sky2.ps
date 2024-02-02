@@ -6,6 +6,7 @@ struct         v2p
 	float3	tc0		: TEXCOORD0;
 	float3	tc1		: TEXCOORD1;
 	float3	pos		: TEXCOORD2;
+	float2	screen_pos	: TEXCOORD3;
 };
 struct        _out
 {
@@ -33,7 +34,7 @@ _out main( v2p I )
 	// final tone-mapping
 	_out			o;
 
-	o.low        	=		sky.xyzz		;
+	o.low        	=		display_to_intermediate_space(sky.xyzz)		;
 	o.high        	=		o.low/def_hdr	;
 
 	return        	o;

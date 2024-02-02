@@ -18,12 +18,12 @@ float4 	main	( v2p I )	: SV_Target
 {
 //	float4 	s0		= tex2D		(s_clouds0,I.tc0);
 //	float4 	s1		= tex2D		(s_clouds1,I.tc1);
-	float4 	s0		= s_clouds0.Sample( smp_base, I.tc0 );
-	float4 	s1		= s_clouds1.Sample( smp_base, I.tc1 );
-	float4 	mix 	= I.color * (s0 + s1)	;
+	float4 	s0		= display_to_working_space(s_clouds0.Sample( smp_base, I.tc0 ));
+	float4 	s1		= display_to_working_space(s_clouds1.Sample( smp_base, I.tc1 ));
+	float4 	mix 	= display_to_working_space(I.color) * (s0 + s1)	;
 
 	float4 	rgb		= mix		;
 
 //	return  float4	(rgb.rgb, I.color.a);
-	return  rgb;
+	return  display_to_intermediate_space(rgb);
 }

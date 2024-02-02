@@ -31,6 +31,7 @@ f_deffer 	main	( p_flat I 		)
 
  	// diffuse
 	float4 D		= tbase		(I.tcdh);			// IN:  rgb.a
+	D.rgb = display_to_working_space(D.rgb);
 	float4 L 	= s_lmap.Sample( smp_base, I.tcdh);
 	float G 	= 0.001;
 
@@ -155,7 +156,7 @@ f_deffer 	main	( p_flat I 		)
 	float3 d_B = s_dt_b.Sample ( smp_base, detail_tc) * mask.b;
 	float3 d_A = s_dt_a.Sample ( smp_base, detail_tc) * mask.a;
 	float3 dt = d_R + d_G + d_B + d_A;
-	D.rgb = 2 * D.rgb * dt;
+	D.rgb = 2 * D.rgb * dt * dt;
 
 	// Apply tint
 	D.rgb = lerp( D.rgb, D.rgb * G_PUDDLES_TINT, puddles);
@@ -176,7 +177,8 @@ f_deffer 	main	( p_flat I 		)
   #endif
 
  #else
-	D.rgb	= 2*D.rgb*s_detail.Sample( smp_base, I.tcdbump).rgb;
+	float3 det = s_detail.Sample( smp_base, I.tcdbump).rgb;
+	D.rgb	= 2*D.rgb*display_to_working_space(det.rgb);
  #endif
 #else
 	float3	N 	= I.N.xyz	;
@@ -187,6 +189,8 @@ f_deffer 	main	( p_flat I 		)
 #ifdef USE_R2_STATIC_SUN
 		 	ms 	= L.w		;
 #endif
+
+	D.rgb = working_to_display_space(D.rgb);
 
   // 2. Standart output
   float4     Ne = float4	(normalize(N), 									D.w			);

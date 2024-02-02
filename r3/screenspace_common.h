@@ -234,23 +234,23 @@ float3 SSFX_calc_sky(float3 dir)
 	dir.y = (dir.y - max(cos(dir.x) * 0.65f, cos(dir.z) * 0.65f)) * 2.1f; // Fix perspective
 	dir.y -= -0.35; // Altitude
 	
-	float3 sky0 = sky_s0.SampleLevel(smp_base, dir, 0).xyz;
-	float3 sky1 = sky_s1.SampleLevel(smp_base, dir, 0).xyz;
+	float3 sky0 = display_to_working_space(sky_s0.SampleLevel(smp_base, dir, 0).xyz);
+	float3 sky1 = display_to_working_space(sky_s1.SampleLevel(smp_base, dir, 0).xyz);
 	
 	// Use hemi color or real sky color if the modded executable is installed.
 #ifndef SSFX_MODEXE
-	return saturate(L_hemi_color.rgb * 3.0f) * lerp(sky0, sky1, L_ambient.w);
+	return saturate(display_to_working_space(L_hemi_color.rgb) * 3.0f) * lerp(sky0, sky1, L_ambient.w);
 #else
-	return saturate(L_sky_color.bgr * 3.0f) * lerp(sky0, sky1, L_ambient.w);
+	return saturate(display_to_working_space(L_sky_color.bgr) * 3.0f) * lerp(sky0, sky1, L_ambient.w);
 #endif
 }
 
 float3 SSFX_calc_env(float3 dir)
 {
-	float3 env0 = env_s0.SampleLevel(smp_base, dir, 0).xyz;
-	float3 env1 = env_s1.SampleLevel(smp_base, dir, 0).xyz;
+	float3 env0 = display_to_working_space(env_s0.SampleLevel(smp_base, dir, 0).xyz);
+	float3 env1 = display_to_working_space(env_s1.SampleLevel(smp_base, dir, 0).xyz);
 	
-	return env_color.xyz * lerp( env0, env1, env_color.w );
+	return display_to_working_space(env_color.xyz) * lerp( env0, env1, env_color.w );
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel

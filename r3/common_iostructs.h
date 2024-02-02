@@ -336,6 +336,7 @@ struct					gbuffer_data
 	float   hemi; // AO
 	float3  C;
 	float   gloss;
+	float3	view_dir; // view direction useful when P is zero
 };
 
 ////////////////////////////////////////////////////////////////

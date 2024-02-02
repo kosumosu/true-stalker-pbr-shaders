@@ -132,7 +132,7 @@ float4 main( vf I ) : SV_Target
 	if (all(ssr_hit_uv.xy))
 	{
 		// Get reflection pixel from scene screen
-		refl_ray = SSFX_get_image(ssr_hit_uv.xy, 0);
+		refl_ray = intermediate_to_working_space(SSFX_get_image(ssr_hit_uv.xy, 0));
 
 		// Adjust reflection intensity using ssr_hit_uv.y and edgeFade
 		float ray_fade = ssr_hit_uv.y * 5.0f;
@@ -152,7 +152,7 @@ float4 main( vf I ) : SV_Target
 	}
 
 #else
-	reflection = L_hemi_color.rgb;
+	reflection = display_to_working_space(L_hemi_color.rgb);
 #endif
 
 	// Fresnel
@@ -183,7 +183,7 @@ float4 main( vf I ) : SV_Target
 #ifndef WATER_UNDERGROUND
 	float3 Ca0 = saturate(s_watercaustics.Sample(smp_base, w_b.xz * (0.19f / G_SSR_WATER_CAUSTICS_SCALE) + CausticsT.xy + N_Scr ) - 0.1f );
 	float3 Ca1 = saturate(s_watercaustics.Sample(smp_base, w_b.xz * (0.11f / G_SSR_WATER_CAUSTICS_SCALE) + CausticsT.zw + N_Scr ) - 0.1f );
-	float3 CA = min(Ca0, Ca1) * water_shadows * G_SSR_WATER_CAUSTICS; // Caustics if light hit the water
+	float3 CA = display_to_working_space(min(Ca0, Ca1)) * water_shadows * G_SSR_WATER_CAUSTICS; // Caustics if light hit the water
 #else
 	float3 CA = float3(0.0f, 0.0f, 0.0f);
 #endif
@@ -196,13 +196,14 @@ float4 main( vf I ) : SV_Target
 	float waterFog = exp(waterDepth) - 1.0f;
 
 	// Screen buffer
-	float3 screen = SSFX_get_image(PosTc + Refraction_UV, 0);
+	float3 screen = intermediate_to_working_space(SSFX_get_image(PosTc + Refraction_UV, 0));
 
 	// Base texture * base color
 	float3 base_tex = s_base.Sample(smp_base, (w_s.xz + eye_position.xz) * 0.1f + N_Tex).rgb;
 
 	// Texture * base color
 	base_tex *= I.c0.rgb;
+	base_tex = display_to_working_space(base_tex);
 
 	// Mix refraction ( 100% clear water ) & base texture ( Turbidity )
 	float3 turbidity = lerp(base_tex, screen, smoothstep(G_SSR_WATER_FOG_MAXDEPTH, -G_SSR_WATER_TURBIDITY, waterFog));
@@ -220,7 +221,7 @@ float4 main( vf I ) : SV_Target
 	// Specular
 #ifdef NEED_SPECULARS
 	float3 Nf = normalize(float3(Nw.x, Nw.y * G_SSR_WATER_SPECULAR_NORMAL, Nw.z)); // flatten the water normal to get better specular
-	float3 spec = L_sun_color.rgb * pow(abs(dot(normalize(v2point + L_sun_dir_w), Nf)), 512) * G_SSR_WATER_SPECULAR;
+	float3 spec = display_to_working_space(L_sun_color.rgb) * pow(abs(dot(normalize(v2point + L_sun_dir_w), Nf)), 512) * G_SSR_WATER_SPECULAR;
 	acc += spec * water_shadows;
 #endif
 
@@ -230,7 +231,7 @@ float4 main( vf I ) : SV_Target
 #else
 	float fogging = I.fog;
 #endif
-	acc = lerp(fog_color, acc, fogging);
+	acc = working_to_intermediate_space(lerp( display_to_working_space(fog_color), acc, fogging));
 	
 	// Soft border
 	float border_alpha = smoothstep( 0.0 , G_SSR_WATER_SOFTBORDER, waterDepth);

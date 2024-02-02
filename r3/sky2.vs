@@ -14,6 +14,7 @@ struct v2p
 	float3	tc0		: TEXCOORD0;
 	float3	tc1		: TEXCOORD1;
 	float3	pos		: TEXCOORD2;
+	float2	screen_pos	: TEXCOORD3;
 	float4	hpos	: SV_Position;
 };
 
@@ -26,6 +27,7 @@ v2p main (vi v)
 	o.tc0			= v.tc0;                        					// copy tc
 	o.tc1			= v.tc1;                        					// copy tc
 	o.pos			= (float3)mul(m_WV, v.p);
+	o.screen_pos = o.hpos.xy;
 //	float	scale	= tex2Dlod	(s_tonemap,float4(.5,.5,.5,.5)).x ;
 	float	scale	= s_tonemap.Load( int3(0,0,0) ).x;
 //	float	scale	= s_tonemap.Load( int3(1,1,0) ).x;

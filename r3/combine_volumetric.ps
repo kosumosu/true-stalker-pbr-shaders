@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include "jitter.h"
+
 //	Igor: used for volumetric light
 #ifndef USE_MSAA
 Texture2D 							s_vollight;
@@ -14,6 +16,7 @@ Texture2DMS<float4, MSAA_SAMPLES>	s_vollight;
 struct	_input      
 {
 	float4	tc0	: TEXCOORD0;	// tc.xy, tc.w = tonemap scale
+	float2	tcJ	: TEXCOORD1;	// jitter coords
 };
 
 struct	_out
@@ -21,6 +24,7 @@ struct	_out
         float4	low		: SV_Target0;
         float4	high	: SV_Target1;
 };
+
 
 //	TODO: DX10: Use load instead of sample
 _out main( _input I )
@@ -43,6 +47,12 @@ _out main( _input I )
 #endif // USE_MSAA
 
 	tonemap(o.low, o.high, color, tm_scale );
+
+	o.low.rgb = working_to_intermediate_space(o.low.rgb);
+	o.low.rgb += sample_color256_jitter(I.tc0.xy*pos_decompression_params2.xy);
+	//o.low.rgb += sample_color256_jitter_tcj(I.tcJ.xy		/=	tcJ.w + float2(0.1351, 0.3547)*0) * 100;
+	//o.low.rgb += random_color(I.tc0);
+	//o.low.rgb = pow(o.low.rgb, 0.5);
 
 	return o;
 }
