@@ -18,6 +18,7 @@ struct PSOutput
 PSOutput main(PSInput I)
 {
 	float4 color = s_base.Sample( smp_rtlinear, I.Tex0.xy );
+	color.rgb = display_to_intermediate_space(color.rgb);
 
 	// final tone-mapping
 	PSOutput Out;

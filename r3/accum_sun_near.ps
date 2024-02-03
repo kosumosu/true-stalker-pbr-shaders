@@ -54,7 +54,7 @@ out_lighting main ( v2p_volume I ) : SV_Target
 
 	float4	_P	= float4( gbd.P, gbd.mtl );
 	float4	_N	= float4( gbd.N, gbd.hemi );
-	float4	_C	= float4( display_to_working_space(gbd.C), gbd.gloss );
+	float4	_C	= float4( gbd.C, gbd.gloss );
 
 	// ----- light-model
 	float	m	= xmaterial;

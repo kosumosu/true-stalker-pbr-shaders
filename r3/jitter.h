@@ -1,6 +1,8 @@
 #ifndef	JITTER_H_INCLUDED
 #define	JITTER_H_INCLUDED
 
+#include "gamma.h"
+
 #define JITTER_TEXTURE_SIZE	64.0f
 
 sampler		smp_jitter;
@@ -19,11 +21,14 @@ float3 random_color(float2 uv) {
 }
 
 float4 sample_jitter(float2 tc) {
-    return jitter0.Sample( smp_jitter, tc * screen_res.x * 1.f / JITTER_TEXTURE_SIZE );
+    return jitter0.Sample( smp_jitter, tc * screen_res * 1.f / JITTER_TEXTURE_SIZE );
 }
 
-float3 sample_color256_jitter(float2 tc) {
-    return /*sample_jitter(tc)*/ random_color(tc) * 0.5 / 255.0;
+float3 sample_intermediate_dither(float2 tc) {
+	//return 0.0.xxx;
+	return sample_jitter(tc) * intermediate_half_quantum;
+	//return sample_jitter(tc) * 0.5 / 255.0;
+    //return /*sample_jitter(tc)*/ random_color(tc) * 0.5 / 255.0;
 }
 
 #endif

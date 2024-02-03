@@ -49,10 +49,7 @@ _out main( _input I )
 	tonemap(o.low, o.high, color, tm_scale );
 
 	o.low.rgb = working_to_intermediate_space(o.low.rgb);
-	o.low.rgb += sample_color256_jitter(I.tc0.xy*pos_decompression_params2.xy);
-	//o.low.rgb += sample_color256_jitter_tcj(I.tcJ.xy		/=	tcJ.w + float2(0.1351, 0.3547)*0) * 100;
-	//o.low.rgb += random_color(I.tc0);
-	//o.low.rgb = pow(o.low.rgb, 0.5);
+	o.low.rgb += sample_intermediate_dither(I.tc0.xy);
 
 	return o;
 }

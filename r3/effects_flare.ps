@@ -34,5 +34,5 @@ float4 main( p_flare I ) : SV_Target
 	// clip pixels on hud
 	clip			(spaceDepth-CLIP_DISTANCE);
 
-	return	t_base;
+	return	float4(display_to_intermediate_space(t_base.rgb), t_base.a);
 }

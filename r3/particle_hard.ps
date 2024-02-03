@@ -11,6 +11,7 @@ struct v2p
 float4 main( v2p I ) : SV_Target
 {
 	float4 result = I.c * s_base.Sample( smp_base, I.tc0);
+	result.rgb = display_to_intermediate_space(result.rgb);
 	clip(result.a-(0.01f/255.0f));
 	return	result;
 }

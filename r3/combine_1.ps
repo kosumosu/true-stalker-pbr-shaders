@@ -94,7 +94,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 	// Sample the buffers:
 	float4	P = float4( gbd.P, gbd.mtl );	// position.(mtl or sun)
 	float4	N = float4( gbd.N, gbd.hemi );		// normal.baked_ao
-	float4	D = float4( display_to_working_space(gbd.C), gbd.gloss );		// rgb.specular
+	float4	D = float4( gbd.C, gbd.gloss );		// rgb.specular
 #ifndef USE_MSAA
 	float4	L = s_accum_diffuse.Sample( smp_nofilter, I.tc0);	// diffuse lighting
 	float4	S = s_accum_spec.Sample( smp_nofilter, I.tc0);	// specular lighting
@@ -278,9 +278,6 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 
 		o.low.rgb = working_to_intermediate_space(o.low.rgb);
 
-		o.low.rgb += sample_color256_jitter(I.tc0.xy);
-		//o.low.rgb = pow(o.low.rgb, 0.5);
-		//o.low.r = 1;
-
+		o.low.rgb += sample_intermediate_dither(I.tc0.xy);
 		return        	o;
 }

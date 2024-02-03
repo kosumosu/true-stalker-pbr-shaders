@@ -89,7 +89,7 @@ float4 	main (v2p_volume  I) : SV_Target
 //	float2	tcJ = I.tcJ;
 //	Variable ray length, variable step dencity, use jittering
 	//float4	J0 	= tex2D		(jitter0,tcJ);
-	float4	J0 	= jitter0.Sample( smp_jitter, tc*screen_res.x*1.f/JITTER_TEXTURE_SIZE );
+	float4	J0 	= jitter0.Sample( smp_jitter, tc*screen_res*1.f/JITTER_TEXTURE_SIZE );
 	float	coeff = (RAY_SAMPLES - 1*J0.x)/(RAY_SAMPLES*RAY_SAMPLES);
 	float3	direction = P*coeff;
 	// float	deltaDepth = direction.z;

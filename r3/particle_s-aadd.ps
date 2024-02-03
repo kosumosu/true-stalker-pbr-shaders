@@ -15,7 +15,9 @@ float4 main ( v2p I ) : SV_Target
 	// color = 1	-> color=c
 	//float4	c 	= 	I.c*tex2D	(s_base,I.tc0);
 	float4	c 	= I.c * s_base.Sample( smp_base, I.tc0 );
-		c.xyz	*= 	c.w;
+	c.rgb = display_to_working_space(c.rgb);
+	c.xyz	*= 	c.w;
 	float3 	r	= 	float3(1,1,1)-c.xyz+c.xyz*c.xyz;	// lerp(1,c.xyz,c.xyz), can't be less than .5h
+	r = working_to_intermediate_space(r);
 	return	float4(r,1);
 }

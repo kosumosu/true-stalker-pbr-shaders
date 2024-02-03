@@ -269,11 +269,19 @@ light_t plight_infinity_pbr( float m, float3 albedo, float gloss, float3 pnt, fl
 	// [ SSS Test ]. Overwrite terrain material
 	bool m_terrain = abs(m - MAT_TERRAIN) <= MAT_FLORA_ELIPSON;
 	bool m_flora = abs(m - MAT_FLORA) <= MAT_FLORA_ELIPSON;
-	if (m_terrain)
+	if (m_terrain) {
+		gloss *= gloss;
 	 	m = 0.25;
 
-	if (m_flora)
+		// light_t lt;
+		// lt.diffuse = float3(10,2,2);
+		// lt.specular = 0.0.xxx;
+		// return lt;
+	}
+
+	if (m_flora) {
 		gloss = 0.0;
+	}
 
 	float3 viewDirection = -normalize(pnt);
 	light_t light = light_pbr(m, albedo, gloss, -lightDirection, viewDirection, normal);  // no albedo (s_diffuse) in True Stalker is available here
@@ -296,11 +304,14 @@ light_t plight_local_pbr( float m, float3 albedo, float gloss, float3 pnt, float
 {
 	bool m_terrain = abs(m - MAT_TERRAIN) <= MAT_FLORA_ELIPSON;
 	bool m_flora = abs(m - MAT_FLORA) <= MAT_FLORA_ELIPSON;
-	if (m_terrain)
+	if (m_terrain) {
+		gloss *= gloss;
 	 	m = 0.25;
+	}
 
-	if (m_flora)
+	if (m_flora) {
 		gloss = 0.0;
+	}
 
 	float3 pointToLight = light_position - pnt;
 	float3 lightDirection = normalize(pointToLight);

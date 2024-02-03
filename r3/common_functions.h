@@ -267,7 +267,7 @@ gbuffer_data gbuffer_load_data( float2 tc : TEXCOORD, float2 pos2d, int iSample 
    float4	C	= s_diffuse.Load( int3( pos2d, 0 ), iSample );
 #endif
 
-	gbd.C		= C.xyz;
+	gbd.C		= albedo_to_working_space(C.xyz);
 	gbd.gloss	= C.w;
 
 	return gbd;
@@ -322,7 +322,7 @@ gbuffer_data gbuffer_load_data( float2 tc : TEXCOORD, uint iSample )
 #endif
 
 
-	gbd.C		= C.xyz;
+	gbd.C		= albedo_to_working_space(C.xyz);
 	gbd.gloss	= C.w;
 
 	return gbd;

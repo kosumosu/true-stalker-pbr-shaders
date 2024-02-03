@@ -65,7 +65,7 @@ f_deffer 	main	( p_flat I )
 
 #ifdef	USE_TDETAIL
 //	D.rgb	= 2*D.rgb*tex2D	(s_detail, I.tcdbump).rgb;
-	D.rgb	= 2*D.rgb * s_detail.Sample( smp_base, I.tcdbump ).rgb;
+	D.rgb	= 2*D.rgb * display_to_albedo_space(s_detail.Sample( smp_base, I.tcdbump ).rgb);
 #endif
 
 	// hemi,sun,material

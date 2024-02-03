@@ -30,7 +30,8 @@ struct	surface_bumped
 
 float4 tbase( float2 tc )
 {
-   return	s_base.Sample( smp_base, tc);
+	float4 col = s_base.Sample( smp_base, tc);
+	return float4(display_to_albedo_space(col.rgb), col.a);
 }
 
 #if defined(ALLOW_STEEPPARALLAX) && defined(USE_STEEPPARALLAX)

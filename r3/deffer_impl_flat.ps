@@ -31,7 +31,7 @@ f_deffer 	main	( p_flat I 		)
 
  	// diffuse
 	float4 D		= tbase		(I.tcdh);			// IN:  rgb.a
-	D.rgb = display_to_working_space(D.rgb);
+	//D.rgb = display_to_working_space(D.rgb);
 	float4 L 	= s_lmap.Sample( smp_base, I.tcdh);
 	float G 	= 0.001;
 

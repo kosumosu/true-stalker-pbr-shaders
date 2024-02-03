@@ -15,7 +15,7 @@ v2p_TL0uv main ( v_TL0uv_positiont I )
 		O.HPos.zw = I.P.zw;
 	}
 
-	O.Color = I.Color.bgra;	//	swizzle vertex colour
+	O.Color = display_to_intermediate_space(I.Color.bgra);	//	swizzle vertex colour
 
  	return O;
 }

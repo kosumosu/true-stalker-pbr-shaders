@@ -22,7 +22,9 @@ void sample_Textures( inout float4 D, inout float4 H, float2 tc1, float2 tc0, fl
   float2 ddy_tc1 = ddy( tc1 );
 
   float4 D1 	= s_base.Sample( smp_base, tc1 + pixeloffset.x * ddx_tc1 + pixeloffset.y * ddy_tc1 );
+  D1.rgb = display_to_albedo_space(D1.rgb);
   float4 D0 	= s_base.Sample( smp_base, tc0 + pixeloffset.x * ddx_tc0 + pixeloffset.y * ddy_tc0 );
+  D0.rgb = display_to_albedo_space(D0.rgb);
   float4 H0 	= s_hemi.Sample( smp_linear, tc0 + pixeloffset.x * ddx_tc0 + pixeloffset.y * ddy_tc0 );	H0.xyz 	=  H0.rgb*2-1;	// expand
   float4 H1 	= s_hemi.Sample( smp_linear, tc1 + pixeloffset.x * ddx_tc1 + pixeloffset.y * ddy_tc1 );	H1.xyz 	=  H1.rgb*2-1;	// expand
 
