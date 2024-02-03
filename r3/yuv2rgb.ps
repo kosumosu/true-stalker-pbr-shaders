@@ -26,7 +26,7 @@ float4 main(float2 uv : TEXCOORD0) : SV_Target
 	float3	_S	= float3		(-0.86961f,		+0.53076f,	-1.0786f)		;
 	
 
-	return float4(_Y+_U+_V+_S,1);
+	return float4(display_to_intermediate_space(_Y+_U+_V+_S),1);
 
 //	return float4(1,0,0,1);
 }
