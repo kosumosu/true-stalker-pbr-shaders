@@ -2,6 +2,7 @@
 #define	common_functions_h_included
 
 #include "gamma.h"
+#include "jitter.h"
 
 //	contrast function
 float Contrast(float Input, float ContrastPower)
@@ -37,7 +38,7 @@ void tonemap( out float4 low, out float4 high, float3 rgb, float scale)
 
 float4 combine_bloom( float3  low, float4 high)	
 {
-	return float4( low + high.rgb*high.a, 1.h );
+	return float4( low * (1.0 - 1.0 / def_hdr) + high.rgb*high.a , 1.h );
 }
 
 float calc_fogging( float4 w_pos )      
@@ -207,6 +208,9 @@ f_deffer pack_gbuffer( float4 norm, float4 pos, float4 col, uint imask)
 #endif
 {
 	f_deffer res;
+
+	// TODO: 1/255 looks insufficient. May require 2/255. Maybe because 16-bit buffer is not precise enough to fit all 8 bits of?
+	norm.w += temporal_random(pos.xy, 16543787.0) * 2.0 / 255.0;
 
 #ifndef GBUFFER_OPTIMIZATION
 	res.position	= pos;
@@ -487,7 +491,7 @@ float mie_cornette_shanks(float g, float cosTheta)
 
 float light_inscatter(float cosTheta) {
 
-	return mie_cornette_shanks(0.4, cosTheta);
+	return mie_cornette_shanks(0.25, cosTheta);
 }
 
 float transmission_per_volume_length(float density, float length) {
@@ -501,7 +505,7 @@ float transfer_per_volume_length(float density, float length) {
 float volume_density_from_sunshafts_intensity(float sunshafts_intensity) {
 	float max_density = sunshafts_intensity * sunshafts_intensity;
 
-	return max_density / 8; // consider density is given per X meters;
+	return max_density / 10; // consider density is given per X meters;
 }
 
 float distance_to_fog_ceiling(float from_height, float cosTheta) {

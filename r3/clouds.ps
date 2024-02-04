@@ -24,6 +24,9 @@ float4 	main	( v2p I )	: SV_Target
 
 	float4 	rgb		= mix		;
 
+	rgb.rgb = display_to_intermediate_space(rgb.rgb);
+	rgb.rgb += sample_intermediate_dither(rgb.rgb, I.tc0.xy, 596323);
+
 //	return  float4	(rgb.rgb, I.color.a);
-	return  display_to_intermediate_space(rgb);
+	return  rgb;
 }

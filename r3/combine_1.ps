@@ -265,6 +265,9 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 //color = abs( gbd.N - gbd.N_org );
 //		color = occ; // holger test
 		//color = 0.5f*gbd.N.xyz+0.5f;//gbd.N;
+
+		//color = N.w;
+
         _out        	o;
         tonemap        	(o.low, o.high, color, tm_scale )	;
                         o.low.a         = skyblend	;
@@ -278,6 +281,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 
 		o.low.rgb = working_to_intermediate_space(o.low.rgb);
 
-		o.low.rgb += sample_intermediate_dither(I.tc0.xy);
+		o.low.rgb += sample_intermediate_dither(o.low.rgb, I.tc0.xy, 63721.8733);
+		o.high.rgb += sample_bloom_dither(I.tc0.xy, 897.211);
 		return        	o;
 }

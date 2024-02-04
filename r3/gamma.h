@@ -30,6 +30,20 @@ float4 srgb_to_linear(float4 val)
 }
 
 
+float srgb_to_linear_derivative(float val)
+{ 
+    if( val < 0.04045 )
+        return 1.0 / 12.92;
+    else
+        return 2.1106 * pow(val + 0.055, 1.4);
+}
+
+float srgb_to_linear_delta(float val)
+{ 
+    return srgb_to_linear_derivative(val) / 255.0;
+}
+
+
 #if GAMMA_MODE == LINEAR_SPACE
 
 float3 display_to_albedo_space(float3 value) {
@@ -60,7 +74,9 @@ float4 working_to_display_space(float4 value) {
     return pow(value, 0.5);
 }
 
-static const float intermediate_half_quantum = 0.5 / 255;
+float intermediate_half_quantum(float value) {
+    return 0.5 / 255;
+}
 
 //////////////////
 #elif GAMMA_MODE == LINEAR_SPACE_WITH_GAMMA_COMBINE
@@ -93,7 +109,9 @@ float4 working_to_display_space(float4 value) {
     return pow(value, 0.5);
 }
 
-static const float intermediate_half_quantum = 0.5 / 255;
+float intermediate_half_quantum(float value) {
+    return 0.5 / 255;
+}
 
 //////////////////
 #elif GAMMA_MODE == UNORM_INPUT_SRGB_BUFFERS
@@ -126,7 +144,9 @@ float4 working_to_display_space(float4 value) {
     return value;
 }
 
-static const float intermediate_half_quantum = 1.51763491e-4; // = srgb_to_linear(0.5/255)
+float intermediate_half_quantum(float value) {
+    return srgb_to_linear_delta(value);
+}
 
 //////////////////
 #elif GAMMA_MODE == GAMMA_SPACE
@@ -159,7 +179,9 @@ float4 working_to_display_space(float4 value) {
     return value;
 }
 
-static const float intermediate_half_quantum = 0.5 / 255;
+float intermediate_half_quantum(float value) {
+    return 0.5 / 255;
+}
 
 #else
 #error "unimplemented"
@@ -207,5 +229,13 @@ float working_to_display_space(float value) {
     return working_to_display_space(value.rrrr).r;
 }
 
+
+float3 intermediate_half_quantum(float3 value) {
+    return float3(
+        intermediate_half_quantum(value.r),
+        intermediate_half_quantum(value.g),
+        intermediate_half_quantum(value.b)
+    );
+}
 
 #endif
