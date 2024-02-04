@@ -28,11 +28,13 @@ float4 main( p_postpr I ) : SV_Target
 	float	gray 	= dot		(image,I.Gray);			// dp3
 			image 	= lerp 		(gray,image,I.Gray.w);		// mul/mad
 
+	const float fixed_multiplier = I.Color * 127.5 / 128; // Original neutral color is 128/255=0.50196. But we want exactly 0.5 to avoid any interference to reduce additional color banding.
+
 //	float4	t_noise	= tex2D		(s_noise,I.tc2);	
 	float4	t_noise	= s_noise.Sample( smp_linear, I.Tex2);	
 	float3 	noised 	= image*t_noise*2;                     		// mul_2x
 			image	= lerp( noised, image, I.Color.w); 	// lrp ?
-			image	= (image * I.Color + c_brightness)*2;		// mad
+			image	= (image * fixed_multiplier + c_brightness)*2;		// mad
 //		image	= (image + c_brightness) * I.Color;		// mad ?
 
 	// out
