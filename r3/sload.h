@@ -143,7 +143,8 @@ surface_bumped sload_i( p_bumped I)
 
 	S.base		= tbase(I.tcdh);				//	IN:  rgb.a
 	S.normal	= Nu.wzy + (NuE.xyz - 1.0h);	//	(Nu.wzyx - .5h) + (E-.5)
-	S.gloss		= Nu.x*Nu.x;					//	S.gloss = Nu.x*Nu.x;
+	//S.gloss		= Nu.x*Nu.x;					//	S.gloss = Nu.x*Nu.x;
+	S.gloss		= Nu.x;					//	S.gloss = Nu.x*Nu.x;
 	S.height	= NuE.z;
 	//S.height	= 0;
 
@@ -185,7 +186,8 @@ surface_bumped sload_i( p_bumped I, float2 pixeloffset )
 
 	S.base		= tbase(I.tcdh);				//	IN:  rgb.a
 	S.normal	= Nu.wzyx + (NuE.xyz - 1.0h);	//	(Nu.wzyx - .5h) + (E-.5)
-	S.gloss		= Nu.x*Nu.x;					//	S.gloss = Nu.x*Nu.x;
+	//S.gloss		= Nu.x*Nu.x;					//	S.gloss = Nu.x*Nu.x;
+	S.gloss		= Nu.x;					//	S.gloss = Nu.x*Nu.x;
 	S.height	= NuE.z;
 	//S.height	= 0;
 

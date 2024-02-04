@@ -10,10 +10,16 @@ struct light_t
 };
 
 // Simple subsurface scattering
-float3 SSS(float3 N, float3 V, float3 L)
+float3 SSS_orig(float3 N, float3 V, float3 L)
 {
 	float S = saturate(dot(V, -(L + N))) * ssfx_florafixes_2.x;
 	return S * lerp(float3(1.0f, 1.0f, 1.0f), display_to_working_space(L_sun_color.rgb), ssfx_florafixes_2.y);
+}
+
+float3 SSS(float3 N, float3 V, float3 L)
+{
+	return saturate(dot(V, L - N));
+	//return saturate(dot(N, L));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -179,7 +185,7 @@ float3 torranceCook(
 }
 
 
-light_t light_pbr( float m, float3 albedo, float gloss, float3 diffuseLightDirection, float3 specularLightDirection, float3 viewDirection, float3 normal)
+light_t light_pbr( float m, float3 albedo, float gloss, float final_gloss_multiplier, float3 diffuseLightDirection, float3 specularLightDirection, float3 viewDirection, float3 normal)
 {
 	light_t result;
 
@@ -198,9 +204,9 @@ light_t light_pbr( float m, float3 albedo, float gloss, float3 diffuseLightDirec
 
 	if (material >= 0.0 && material < 1.0) { // OrenNayar - Blinn
 		orenNayarRoughness = lerp (0.5, 0.1, materialBlend);
-		torranceCookRoughness = saturate(0.8 - gloss * 0.6) * lerp(1, 0.6, materialBlend);
+		torranceCookRoughness = lerp(1, 0.6, gloss) * lerp(1, 0.7, materialBlend);
 		torranceCookMetalness = 0;
-		actual_gloss = lerp(0.1, 1.0, gloss);
+		actual_gloss = lerp(0.2, 1.0, gloss);
 
 		// result.diffuse = 0.0.xxx;
 		// result.specular = 0.0.xxx;
@@ -252,17 +258,20 @@ light_t light_pbr( float m, float3 albedo, float gloss, float3 diffuseLightDirec
 	float3 specular = torranceCook(specularLightDirection, viewDirection, normal, torranceCookRoughness, 0.8.xxx, torranceCookMetalness); 
 	//float3 specular = 8 * pow(max(0.0, dot(normalize(viewDirection + specularLightDirection), normal)), 64.0);
 
+	actual_gloss *= final_gloss_multiplier;
 
-	result.diffuse = diffuse * (1.0 - actual_gloss * fresnel_factor);
+	result.diffuse = diffuse * saturate(1.0 - actual_gloss * fresnel_factor);
 	//result.diffuse = dot(diffuseLightDirection, normal);
 	result.specular = specular * actual_gloss;
 	return result;
 }
 
-light_t light_pbr( float m, float3 albedo, float gloss, float3 lightDirection, float3 viewDirection, float3 normal)
+light_t light_pbr( float m, float3 albedo, float gloss, float final_gloss_multiplier, float3 lightDirection, float3 viewDirection, float3 normal)
 {
-	return light_pbr(m, albedo, gloss, lightDirection, lightDirection, viewDirection, normal);
+	return light_pbr(m, albedo, gloss, final_gloss_multiplier, lightDirection, lightDirection, viewDirection, normal);
 }
+
+#define SSFX_FLORAFIX
 
 light_t plight_infinity_pbr( float m, float3 albedo, float gloss, float3 pnt, float3 normal, float3 lightDirection )
 {
@@ -270,8 +279,8 @@ light_t plight_infinity_pbr( float m, float3 albedo, float gloss, float3 pnt, fl
 	bool m_terrain = abs(m - MAT_TERRAIN) <= MAT_FLORA_ELIPSON;
 	bool m_flora = abs(m - MAT_FLORA) <= MAT_FLORA_ELIPSON;
 	if (m_terrain) {
-		gloss *= gloss;
-	 	m = 0.25;
+	 	m = 0.0;
+		gloss = saturate(gloss * 4);
 
 		// light_t lt;
 		// lt.diffuse = float3(10,2,2);
@@ -279,21 +288,24 @@ light_t plight_infinity_pbr( float m, float3 albedo, float gloss, float3 pnt, fl
 		// return lt;
 	}
 
+	float final_gloss_multiplier = 1.0;
 	if (m_flora) {
 		gloss = 0.0;
+		final_gloss_multiplier = 0.4;
 	}
 
 	float3 viewDirection = -normalize(pnt);
-	light_t light = light_pbr(m, albedo, gloss, -lightDirection, viewDirection, normal);  // no albedo (s_diffuse) in True Stalker is available here
+	light_t light = light_pbr(m, albedo, gloss, final_gloss_multiplier, -lightDirection, viewDirection, normal);  // no albedo (s_diffuse) in True Stalker is available here
 	//light_t light = light_pbr(m, 0.6.xxx, gloss, -lightDirection, viewDirection, normal);
 	//light_t light = light_pbr(m, 0.6.xxx, 0.8, -lightDirection, viewDirection, normal);
 
 #ifdef SSFX_FLORAFIX
 	if (m_flora) //Be aware of precision loss/errors
 	{
+		//light.diffuse.rgb *= 0.5;
 		//Simple subsurface scattering
-		float3 subsurface = SSS(normal, viewDirection, -lightDirection);
-		light.diffuse.rgb += subsurface*albedo*0.3f;
+		float3 subsurface = SSS(normal, viewDirection, lightDirection);
+		light.diffuse.rgb += subsurface*0.4;
 	}
 #endif
 
@@ -305,23 +317,36 @@ light_t plight_local_pbr( float m, float3 albedo, float gloss, float3 pnt, float
 	bool m_terrain = abs(m - MAT_TERRAIN) <= MAT_FLORA_ELIPSON;
 	bool m_flora = abs(m - MAT_FLORA) <= MAT_FLORA_ELIPSON;
 	if (m_terrain) {
-		gloss *= gloss;
-	 	m = 0.25;
+		m = 0.0;
+		gloss = saturate(gloss * 4);
 	}
 
+	float final_gloss_multiplier = 1.0;
 	if (m_flora) {
 		gloss = 0.0;
+		final_gloss_multiplier = 0.4;
 	}
+	
 
 	float3 pointToLight = light_position - pnt;
 	float3 lightDirection = normalize(pointToLight);
 	float3 viewDirection = -normalize(pnt);
 
-	light_t light = light_pbr(m, albedo, gloss, lightDirection, viewDirection, normal);  // no albedo (s_diffuse) in True Stalker is available here
+	light_t light = light_pbr(m, albedo, gloss, final_gloss_multiplier, lightDirection, viewDirection, normal);  // no albedo (s_diffuse) in True Stalker is available here
 	//light_t light = light_pbr(m, 0.6.xxx, gloss, lightDirection, viewDirection, normal); 
 	rsqr = dot (pointToLight, pointToLight);
 	float  att 	= display_to_working_space(saturate	(1 - rsqr*light_range_rsq));			// q-linear attenuate
 	//float att = 6.0 / rsqr;
+
+#ifdef SSFX_FLORAFIX
+	if (m_flora) //Be aware of precision loss/errors
+	{
+		//light.diffuse.rgb *= 0.5;
+		//Simple subsurface scattering
+		float3 subsurface = SSS(normal, viewDirection, lightDirection);
+		light.diffuse.rgb += subsurface*0.4;
+	}
+#endif
 
 	light.diffuse *= att;
 	light.specular *= att;
