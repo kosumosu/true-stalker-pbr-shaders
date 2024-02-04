@@ -30,8 +30,15 @@ void hmodel_pbr
 	// [ SSS Test ]. Overwrite terrain material
 	bool m_terrain = abs(m - MAT_TERRAIN) <= 0.04f;
 	bool m_flora = abs(m - MAT_FLORA) <= 0.04f;
-	if (m_terrain)
+	if (m_terrain) {
 		m = 0;
+	}
+
+	float3 ambient = display_to_working_space(L_ambient.rgb);
+	if (m_flora) {
+		h *= 0.8;
+		ambient *= 0.8;
+	}
 
         // hscale - something like diffuse reflection
 	float3	nw		= mul( m_v2w, normal );
@@ -57,15 +64,17 @@ void hmodel_pbr
 	float3	e1d		= env_s1.SampleLevel( smp_rtlinear, nw, 0 );
 	float3	env_d	= env_color.xyz * lerp( e0d, e1d, env_color.w );
 			env_d	*=env_d;	// contrast
-			hdiffuse= env_d * display_to_working_space(hscale) + display_to_working_space(L_ambient.rgb);
+			//hdiffuse= env_d * display_to_working_space(hscale) + ambient;
+			hdiffuse= env_d * hscale + ambient;
 	// specular color
 	vreflect.y      = vreflect.y*2-1;	// fake remapping
-	float3	e0s		= sky_s0.SampleLevel( smp_rtlinear, vreflect, 0 );
-	float3	e1s		= sky_s1.SampleLevel( smp_rtlinear, vreflect, 0 );
+	float3	e0s		= env_s0.SampleLevel( smp_rtlinear, vreflect, 0 );
+	float3	e1s		= env_s1.SampleLevel( smp_rtlinear, vreflect, 0 );
 	float3	env_s	= env_color.xyz * lerp( e0s, e1s, env_color.w);
+			env_s	= display_to_working_space(env_s);
 			env_s	*=env_s;	// contrast
-			env_s	= display_to_working_space(env_s);	// contrast
-		hspecular	= env_s * hspec * spec * display_to_working_space(s);
+			env_s	*=env_s;	// contrast
+		hspecular	= env_s * hspec * spec * pow(display_to_working_space(s), 2); // pow to adjust for roughness
 
 	float raw_material = m * 3;
 	float material = floor(raw_material);
