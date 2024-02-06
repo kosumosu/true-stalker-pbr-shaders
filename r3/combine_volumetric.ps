@@ -50,6 +50,7 @@ _out main( _input I )
 
 	o.low.rgb = working_to_intermediate_space(o.low.rgb);
 	o.low.rgb += sample_intermediate_dither(o.low.rgb, I.tc0.xy, 9874556165.0);
+	o.high.rgb += sample_bloom_dither(o.high.rgb, I.tc0.xy, 657984.37);
 
 	return o;
 }

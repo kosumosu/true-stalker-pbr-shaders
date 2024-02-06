@@ -29,6 +29,12 @@ float4 srgb_to_linear(float4 val)
 	return float4(srgb_to_linear(val.r), srgb_to_linear(val.g), srgb_to_linear(val.b), srgb_to_linear(val.a));
 }
 
+float linear_to_srgb(float val)
+{
+    return val < 0.0031308
+        ? val * 12.92
+        : 1.055 * pow(val, 1.0 / 2.4) - 0.055;
+}
 
 float srgb_to_linear_derivative(float val)
 { 
@@ -38,9 +44,11 @@ float srgb_to_linear_derivative(float val)
         return 2.1106 * pow(val + 0.055, 1.4);
 }
 
-float srgb_to_linear_delta(float val)
-{ 
-    return srgb_to_linear_derivative(val) / 255.0;
+float srgb_derivative_of_linear_value(float val)
+{
+    return val < 0.0031308
+        ? 1.0 / 12.92
+        : 2.27488 * pow(val, 0.583333);
 }
 
 
@@ -145,7 +153,7 @@ float4 working_to_display_space(float4 value) {
 }
 
 float intermediate_half_quantum(float value) {
-    return srgb_to_linear_delta(value);
+    return srgb_derivative_of_linear_value(value) * 0.5 / 255.0;
 }
 
 //////////////////

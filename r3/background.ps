@@ -26,6 +26,6 @@ PSOutput main(PSInput I)
 	Out.high     = Out.low/def_hdr;
 
 	Out.low.rgb += sample_intermediate_dither(Out.low.rgb, I.TexJ.xy, 8798765.02);
-	Out.high.rgb += sample_bloom_dither(I.TexJ.xy, 35456.839);
+	Out.high.rgb += sample_bloom_dither(Out.high.rgb, I.TexJ.xy, 35456.839);
 	return Out;
 }

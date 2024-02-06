@@ -23,25 +23,20 @@ Texture2D 	s_vp2;
 //uniform samplerCUBE	s_env0;
 //uniform samplerCUBE	s_env1;
 
-float random(float2 co)
-{
-      return 0.5+(frac(sin(dot(co.xy ,float2(12.9898,78.233))) * 43758.5453))*0.5;
-};
-
 float4 main( v2p I ) : SV_Target
 {
 	if (m_hud_params.y * m_hud_params.a < 0.0001) return float4 (0,0,0,0);
 	
-	float4	t_base 		= s_base.Sample		( smp_base, I.tc0);		// Òåêñòóðà ñåòêè	
+	float4	t_base 		= s_base.Sample		( smp_base, I.tc0);		// Ð¢ÐµÐºÑÑ‚ÑƒÑ€Ð° ÑÐµÑ‚ÐºÐ¸
 	
-	//ñäâèã îò ñîñòîÿíèÿ îðóæèÿ
+	//ÑÐ´Ð²Ð¸Ð³ Ð¾Ñ‚ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ñ Ð¾Ñ€ÑƒÐ¶Ð¸Ñ
 	I.tc0.x	= I.tc0.x+m_zoom_deviation.x;
 	I.tc0.y	= I.tc0.y+m_zoom_deviation.y;	
 	
-	// Ðàñòÿãèâàåì êàðòèíêó â ëèíçå òàê, ÷òîáû íà ëþáîì ðàçðåøåíèè ýêðàíà áûëè ïðàâèëüíûå ïðîïîðöèè
+	// Ð Ð°ÑÑ‚ÑÐ³Ð¸Ð²Ð°ÐµÐ¼ ÐºÐ°Ñ€Ñ‚Ð¸Ð½ÐºÑƒ Ð² Ð»Ð¸Ð½Ð·Ðµ Ñ‚Ð°Ðº, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð½Ð° Ð»ÑŽÐ±Ð¾Ð¼ Ñ€Ð°Ð·Ñ€ÐµÑˆÐµÐ½Ð¸Ð¸ ÑÐºÑ€Ð°Ð½Ð° Ð±Ñ‹Ð»Ð¸ Ð¿Ñ€Ð°Ð²Ð¸Ð»ÑŒÐ½Ñ‹Ðµ Ð¿Ñ€Ð¾Ð¿Ð¾Ñ€Ñ†Ð¸Ð¸
 	I.tc0.x = resize(I.tc0.x, screen_res.x/screen_res.y, 0);
 	
-	float4	t_vp2	 = s_vp2.Sample	( smp_base, I.tc0);  			// Èçîáðàæåíèå ñî âòîðîãî âüþïîðòà
+	float4	t_vp2	 = s_vp2.Sample	( smp_base, I.tc0);  			// Ð˜Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ðµ ÑÐ¾ Ð²Ñ‚Ð¾Ñ€Ð¾Ð³Ð¾ Ð²ÑŒÑŽÐ¿Ð¾Ñ€Ñ‚Ð°
 
 	float2 offset = distance(I.tc0, float2( .5f, .5f ))*float2(m_hud_params.z, m_hud_params.z);
 	
@@ -50,7 +45,7 @@ float4 main( v2p I ) : SV_Target
 	
 	float3	final	 = float3(0, 0, 0);
 	
-	float3 	base	= lerp	(t_vp2, t_base, t_base.a);		// Ñåòêó ñ âüþïîðòîì
+	float3 	base	= lerp	(t_vp2, t_base, t_base.a);		// Ð¡ÐµÑ‚ÐºÑƒ Ñ Ð²ÑŒÑŽÐ¿Ð¾Ñ€Ñ‚Ð¾Ð¼
 	final	= base;
 
 		

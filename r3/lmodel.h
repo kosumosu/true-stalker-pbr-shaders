@@ -206,6 +206,7 @@ light_t light_pbr( float m, float3 albedo, float gloss, float final_gloss_multip
 		orenNayarRoughness = lerp (0.5, 0.1, materialBlend);
 		torranceCookRoughness = lerp(1, 0.6, gloss) * lerp(1, 0.7, materialBlend);
 		torranceCookMetalness = 0;
+		//torranceCookMetalness = (gloss * gloss) * (gloss * gloss);
 		actual_gloss = lerp(0.2, 1.0, gloss);
 
 		// result.diffuse = 0.0.xxx;

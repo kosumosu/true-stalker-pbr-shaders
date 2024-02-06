@@ -281,7 +281,8 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 
 		o.low.rgb = working_to_intermediate_space(o.low.rgb);
 
+		//o.low.rgb = saturate(I.tc0.x);
 		o.low.rgb += sample_intermediate_dither(o.low.rgb, I.tc0.xy, 63721.8733);
-		o.high.rgb += sample_bloom_dither(I.tc0.xy, 897.211);
+		o.high.rgb += sample_bloom_dither(o.high.rgb, I.tc0.xy, 897.211);
 		return        	o;
 }

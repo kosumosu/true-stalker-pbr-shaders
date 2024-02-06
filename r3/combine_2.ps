@@ -111,6 +111,7 @@ c2_out main( v2p_aa_AA I )
 	img = lerp(img, float3(1,1,1), saturate(lum-0.5f)*2.0f);
 
 	res.Color.rgb = saturate(lerp(res.Color.rgb, img, saturate(lum*color_grading.w)));
+	res.Color.rgb += sample_intermediate_dither(res.Color.rgb, I.Tex0.xy, 845654.4);
 #endif
 
 #ifdef USE_MSAA

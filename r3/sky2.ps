@@ -22,20 +22,23 @@ TextureCube	s_sky1	:register(t1);
 // Pixel
 _out main( v2p I )
 {
-	float3	s0		= s_sky0.Sample( smp_rtlinear, I.tc0 );
-	float3	s1		= s_sky1.Sample( smp_rtlinear, I.tc1 );
+	float3	s0		= display_to_working_space(s_sky0.Sample( smp_rtlinear, I.tc0 ));
+	float3	s1		= display_to_working_space(s_sky1.Sample( smp_rtlinear, I.tc1 ));
 	float3	sky		= I.factor*lerp( s0, s1, I.factor.w );
 		sky     	*= 0.33f;
 	float3	npos		= normalize(I.pos);
 	float	gradient	= pow(1-mul((float3x3)m_inv_V, npos).y, fog_params.z);
 		gradient	= saturate(gradient);
-		sky		= lerp(sky, I.factor.rgb*fog_color.rgb, gradient);
+		sky		= lerp(sky, I.factor.rgb*display_to_working_space(fog_color.rgb), gradient);
 
 	// final tone-mapping
 	_out			o;
 
-	o.low        	=		display_to_intermediate_space(sky.xyzz)		;
+	o.low        	=		working_to_intermediate_space(sky.xyzz)		;
 	o.high        	=		o.low/def_hdr	;
+
+	o.low.rgb += sample_intermediate_dither(o.low.rgb, I.tc0.xy, 9835454.2334);
+	o.high.rgb += sample_bloom_dither(o.high.rgb, I.tc0.xy, 111985.4);
 
 	return        	o;
 }
