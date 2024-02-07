@@ -11,5 +11,9 @@ struct 	v2p
 float4 main ( v2p I ) : SV_Target
 {
 //	return	tex2D	(s_base,I.tc0);
-	return  s_base.Sample( smp_rtlinear, I.tc0 );
+	float4 col = s_base.Sample( smp_rtlinear, I.tc0 );
+
+	col.rgb = display_to_albedo_space(col.rgb);
+
+	return col;
 }
