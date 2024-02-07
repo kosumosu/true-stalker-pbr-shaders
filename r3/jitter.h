@@ -120,6 +120,22 @@ float4 sample_jitter(float2 tc) {
 
 ////
 
+float3 sample_dither_unorm_scalar(float2 tc, float phase_shift) {
+	//return 0.0.xxx;
+	return random(float3(tc, timers.x + phase_shift + 987));
+	//return sample_jitter(tc) * intermediate_half_quantum;
+	//return sample_jitter(tc) * 0.5 / 255.0;
+    //return /*sample_jitter(tc)*/ random_color(tc) * 0.5 / 255.0;
+}
+
+float3 sample_dither_snorm_scalar(float2 tc, float phase_shift) {
+	//return 0.0.xxx;
+	return sample_dither_unorm_scalar(tc,phase_shift) * 2.0 - 1.0;
+	//return sample_jitter(tc) * intermediate_half_quantum;
+	//return sample_jitter(tc) * 0.5 / 255.0;
+    //return /*sample_jitter(tc)*/ random_color(tc) * 0.5 / 255.0;
+}
+
 float3 sample_dither_snorm(float2 tc, float phase_shift) {
 	//return 0.0.xxx;
 	return (float3(
